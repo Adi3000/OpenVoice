@@ -9,7 +9,22 @@ import librosa
 from openvoice.text import text_to_sequence
 from openvoice.mel_processing import spectrogram_torch
 from openvoice.models import SynthesizerTrn
+import logging, colorlog
 
+# Configure colored logging
+handler = colorlog.StreamHandler()
+formatter = colorlog.ColoredFormatter(
+    "%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    log_colors={
+        "DEBUG": "white",
+        "INFO": "green",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "bold_red",
+    },
+)
+handler.setFormatter(formatter)
+logger = colorlog.getLogger()
 
 class OpenVoiceBaseClass(object):
     def __init__(self, 
@@ -35,8 +50,8 @@ class OpenVoiceBaseClass(object):
     def load_ckpt(self, ckpt_path):
         checkpoint_dict = torch.load(ckpt_path, map_location=torch.device(self.device))
         a, b = self.model.load_state_dict(checkpoint_dict['model'], strict=False)
-        print("Loaded checkpoint '{}'".format(ckpt_path))
-        print('missing/unexpected keys:', a, b)
+        logger.info("Loaded checkpoint '%s'",ckpt_path)
+        logger.info('missing/unexpected keys: %s, %s', a, b)
 
 
 class BaseSpeakerTTS(OpenVoiceBaseClass):

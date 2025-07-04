@@ -12,14 +12,32 @@ import hashlib
 import base64
 import librosa
 from whisper_timestamped.transcribe import get_audio_tensor, get_vad_segments
+import logging, colorlog
 
-model_size = "medium"
+# Configure colored logging
+handler = colorlog.StreamHandler()
+formatter = colorlog.ColoredFormatter(
+    "%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    log_colors={
+        "DEBUG": "white",
+        "INFO": "green",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "bold_red",
+    },
+)
+handler.setFormatter(formatter)
+logger = colorlog.getLogger()
+
+model_size = os.getenv("ASR_MODEL", "medium")
+MODEL_QUANTIZATION = os.getenv("ASR_QUANTIZATION", "float16" if torch.cuda.is_available() else "int8")
 # Run on GPU with FP16
 model = None
 def split_audio_whisper(audio_path, audio_name, target_dir='processed'):
     global model
     if model is None:
-        model = WhisperModel(model_size, device="cuda", compute_type="float16")
+        logger.info("Load faster-whisper model %s (%s)", model_size, MODEL_QUANTIZATION)
+        model = WhisperModel(model_size_or_path=model_size, device="cuda", compute_type=MODEL_QUANTIZATION,)
     audio = AudioSegment.from_file(audio_path)
     max_len = len(audio)
 
